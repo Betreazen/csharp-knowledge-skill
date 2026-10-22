@@ -177,7 +177,8 @@ public sealed class PlaceOrderHandler(AppDbContext db, TimeProvider clock)
 
 | Ресурс | Автор, год | Зачем читать |
 |---|---|---|
-| [MediatR vs plain service classes in 2026](https://startdebugging.net/2026/05/mediatr-vs-plain-service-classes-in-2026/) | Start Debugging, май 2026 | Факты о лицензии и критерии «оставить или убрать» |
+| [AutoMapper and MediatR Commercial Editions Launch Today](https://www.jimmybogard.com/automapper-and-mediatr-commercial-editions-launch-today/) | Jimmy Bogard, 2025 | Первоисточник по лицензии: RPL-1.5, тарифы, условия Community; актуальные условия — [Lucky Penny Software](https://luckypennysoftware.com/) |
+| [MediatR vs plain service classes in 2026](https://startdebugging.net/2026/05/mediatr-vs-plain-service-classes-in-2026/) | Start Debugging, май 2026 | Вторичный обзор: критерии «оставить или убрать» |
 | [MediatR and MassTransit Going Commercial](https://milanjovanovic.tech/blog/mediatr-and-masstransit-going-commercial-what-this-means-for-you) | Milan Jovanović, апрель 2025 | Хронология, цены MassTransit v9, альтернативы |
 | [AutoMapper, MediatR and MassTransit Are Going Commercial](https://engincanveske.substack.com/p/automapper-mediatr-and-masstransit) | Engin Can Veske, 2025 | Обзор реакции сообщества |
 | [AutoMapper and MediatR Went Commercial — Here's What We're Doing](https://github.com/jasontaylordev/CleanArchitecture/discussions/1346) | Jason Taylor, июль 2025 | Аргумент «оставить и заплатить» |
@@ -479,7 +480,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
 | Вопрос | Позиция A | Позиция B | Рекомендация по умолчанию |
 |---|---|---|---|
-| MediatR после смены лицензии | Jason Taylor: оставить и заплатить, стоимость несущественна ([обсуждение](https://github.com/jasontaylordev/CleanArchitecture/discussions/1346)) | Start Debugging, Milan: обычные сервисы или альтернативы ([статья](https://startdebugging.net/2026/05/mediatr-vs-plain-service-classes-in-2026/)) | Обычные обработчики, внедряемые через DI. Если нужен pipeline — Mediator (source-gen) или Wolverine. MediatR — только с понятной лицензией |
+| MediatR после смены лицензии ([условия от автора](https://www.jimmybogard.com/automapper-and-mediatr-commercial-editions-launch-today/)) | Jason Taylor: оставить и заплатить, стоимость несущественна ([обсуждение](https://github.com/jasontaylordev/CleanArchitecture/discussions/1346)) | Start Debugging, Milan: обычные сервисы или альтернативы ([статья](https://startdebugging.net/2026/05/mediatr-vs-plain-service-classes-in-2026/)) | Обычные обработчики, внедряемые через DI. Если нужен pipeline — Mediator (source-gen) или Wolverine. MediatR — только с понятной лицензией |
 | Слои или срезы | Clean-шаблоны: проекты по слоям | Bogard: срезы по запросам ([статья](https://www.jimmybogard.com/vertical-slice-architecture/)) | Модульный монолит со срезами внутри модуля. Отдельный проект `Domain` — только при богатом домене |
 | Тестовый фреймворк | xUnit v3 по умолчанию ([статья](https://startdebugging.net/2026/08/xunit-v3-vs-nunit-vs-mstest-in-2026/)) | TUnit как современный выбор ([Andrew Lock](https://andrewlock.net/converting-an-xunit-project-to-tunit)) | xUnit v3 на MTP для нового кода. TUnit допустим. Существующий набор не мигрировать без причины: раннер важнее фреймворка |
 | Мокать или нет | Лондонская школа: моки всех зависимостей | Khorikov: моки только для внешних неуправляемых зависимостей | Классическая школа. Своя БД — через Testcontainers |

@@ -58,7 +58,7 @@
 |---|---|---|
 | Непонятно, где тратится время | `dotnet-trace collect` (профили по умолчанию `dotnet-common` + `dotnet-sampled-thread-time`), открыть в PerfView, VS или speedscope; на Windows/macOS — Ultra | [dotnet-trace](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-trace), [Ultra](https://github.com/xoofx/ultra) |
 | Нужна быстрая картина живого процесса | `dotnet-counters monitor`: CPU, % времени в GC, аллокации/с, очередь пула потоков, исключения | [dotnet-counters](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-counters), [runtime metrics](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/built-in-metrics-runtime) |
-| Бенчмарк «улучшился», но непонятно, не шум ли это | BenchmarkDotNet с `[Benchmark(Baseline = true)]`, сравнение распределений, `scripts/compare-bdn.cs` с порогом по full JSON | [Baselines](https://benchmarkdotnet.org/articles/features/baselines.html), [compare-bdn.cs](../scripts/compare-bdn.cs) |
+| Бенчмарк «улучшился», но непонятно, не шум ли это | Замер A/A (два прогона базы до правки), BenchmarkDotNet с `[Benchmark(Baseline = true)]`, `scripts/compare-bdn.cs` с порогом по full JSON, повтор при выигрыше около порога | [Baselines](https://benchmarkdotnet.org/articles/features/baselines.html), [compare-bdn.cs](../scripts/compare-bdn.cs) |
 | Неизвестно, сколько аллоцирует метод | `[MemoryDiagnoser]` в бенчмарке; в тесте — `GC.GetAllocatedBytesForCurrentThread()` до и после | [Diagnosers](https://benchmarkdotnet.org/articles/configs/diagnosers.html), [API](https://learn.microsoft.com/en-us/dotnet/api/system.gc.getallocatedbytesforcurrentthread) |
 | Высокий % времени в GC, частые gen0 | Убрать аллокации в горячем пути: `Span<T>`, пулы, структуры, без LINQ и замыканий | [mem-doc](https://github.com/Maoni0/mem-doc/blob/master/doc/.NETMemoryPerformanceAnalysis.md), [GC и производительность](https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/performance) |
 | Частые gen2 и паузы из-за больших массивов (≥ 85 000 байт) | `ArrayPool<T>.Shared` для буферов, потоковая обработка вместо чтения целиком | [LOH](https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/large-object-heap), [Array Pool](https://adamsitnik.com/Array-Pool/) |
@@ -78,6 +78,8 @@
 | Поиск любого символа или подстроки из набора | `static readonly SearchValues<char>` + `IndexOfAny` | [SearchValues](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.searchvalues-1) |
 | Двойной поиск в словаре (`ContainsKey` + индексатор, `TryGetValue` + запись) | `CollectionsMarshal.GetValueRefOrAddDefault`, `TryAdd` | [CollectionsMarshal](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.collectionsmarshal) |
 | Ключ словаря — `string`, а на входе `ReadOnlySpan<char>` | `GetAlternateLookup<ReadOnlySpan<char>>()` (.NET 9+) без создания строки | [GetAlternateLookup](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2.getalternatelookup) |
+| Сортировка всей коллекции ради первых k элементов (топ-N) | Ограниченная куча `PriorityQueue<T, TPriority>` на k элементов, O(n log k); или одна цепочка `OrderBy(...).Take(k)` без промежуточного `ToList`: LINQ делает частичную сортировку | [PriorityQueue](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.priorityqueue-2), [OrderedEnumerable.cs](https://github.com/dotnet/runtime/blob/main/src/libraries/System.Linq/src/System/Linq/OrderedEnumerable.cs) |
+| В профиле `TextInfo.ChangeCase`/`ToLower` на не-ASCII тексте | Понижать регистр один раз на весь текст или кэшировать отображение; при пословном вызове каждый не-ASCII фрагмент уходит в ICU | [Globalization and ICU](https://learn.microsoft.com/en-us/dotnet/core/extensions/globalization-icu), [Best practices for strings](https://learn.microsoft.com/en-us/dotnet/standard/base-types/best-practices-strings) |
 | Числовой цикл по массиву медленный | `TensorPrimitives` для готовых операций, затем `Vector128/256/512<T>` с проверкой `IsHardwareAccelerated` | [TensorPrimitives](https://learn.microsoft.com/en-us/dotnet/api/system.numerics.tensors.tensorprimitives), [SIMD](https://learn.microsoft.com/en-us/dotnet/standard/simd) |
 | Медленный старт, много JIT в профиле | ReadyToRun (`PublishReadyToRun`), для облака и CLI — Native AOT | [ReadyToRun](https://learn.microsoft.com/en-us/dotnet/core/deploying/ready-to-run), [Native AOT](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) |
 | Первые запросы медленные, потом быстро | Это tiering: прогрев перед вводом в балансировщик, R2R; не отключать `TieredPGO` | [Compilation config](https://learn.microsoft.com/en-us/dotnet/core/runtime-config/compilation) |
@@ -112,9 +114,10 @@
 - `Baseline = true` даёт столбец `Ratio`. Это среднее распределения отношений, а не отношение средних. Смотрите также `RatioSD`.
 - Сравнивайте версии рантайма одним запуском: `--runtimes net10.0 net11.0`. Так сделаны все примеры в статьях Тауба.
 - Для сравнения «до/после» экспортируйте полный JSON (`--exporters fulljson` или `[JsonExporterAttribute.Full]`) и сравнивайте скриптом скилла [scripts/compare-bdn.cs](../scripts/compare-bdn.cs): `dotnet run compare-bdn.cs -- before after 5`. ResultsComparer из dotnet/performance делает то же, но вне своего репозитория не собирается (нужен внутренний Arcade SDK).
-- Если SDK стоит не в стандартном месте (например, `.dotnet/` в репозитории), BDN 0.15.8 падает с `NullReferenceException` в `DotNetSdkValidator`. Передайте путь явно: `-- --cli <путь к dotnet>`.
+- Известные сбои BDN 0.15.8 (например, SDK не в стандартном месте) и их обход — в [toolchain.md, раздел 6](toolchain.md#6-бенчмарки).
 - Диагносты: `DisassemblyDiagnoser` (ассемблер), `ThreadingDiagnoser` (contention, work items), `ExceptionDiagnoser`, `EventPipeProfiler` (кроссплатформенный профиль прямо из бенчмарка), `InliningDiagnoser`, `HardwareCounters` (Windows), диагносты dotTrace и dotMemory в отдельных пакетах.
 - На шумных CI-раннерах разницу в 1–3% не считайте сигналом. Нужны повторные прогоны, фиксированное железо или порог с запасом.
+- Шум измеряйте до первой правки: два прогона базовой линии на неизменённом коде (A/A) должны дать `same`. Доверительный интервал BDN считается внутри одного прогона и дрейф между прогонами не видит. Выигрыш около порога подтверждайте повтором ([pipeline.md, этап 7](pipeline.md#этап-7-базовый-замер-и-профиль)).
 
 ```csharp
 using BenchmarkDotNet.Attributes;
@@ -164,6 +167,8 @@ public class ParseBench
 - Утечки ищите сравнением двух `dotnet-gcdump`, в dotMemory или в VS. Рост памяти без роста кучи GC — признак нативной утечки, это отдельная история.
 - PerfView остаётся самым глубоким инструментом для GC и JIT на Windows. Ultra (xoofx) даёт сэмплирование ETW до 8190 Гц и интерфейс Firefox Profiler на Windows и macOS (Apple Silicon); требует .NET 10 SDK.
 - Чтобы проверить инлайнинг, bounds checks и векторизацию, смотрите ассемблер: Disasmo, `DisassemblyDiagnoser`, SharpLab.
+- `dotnet-trace collect` видит только управляемые кадры. Время внутри нативных библиотек (ICU для культуры и регистра, `libSystem.Native`, драйверы БД) приписывается управляемому методу, который их вызвал. Если в топе `TextInfo.ChangeCaseCore`, `CompareInfo.*` или P/Invoke-обёртка, это чаще всего работа ICU или ОС, а не сам метод. Нативные кадры показывают `collect-linux`, PerfView (ETW) и Ultra.
+- Операции с регистром и сравнение строк по культуре на не-ASCII тексте идут в ICU (на Windows с .NET 5+ тоже). Это касается и `ToLowerInvariant`/`ToUpperInvariant`: «инвариантная» культура не означает «без ICU». Один вызов на весь текст дешевле тысяч пословных, а для горячего цикла можно заранее построить таблицу отображения символов. Ординальное сравнение (`StringComparison.Ordinal`) и режим `InvariantGlobalization=true` ICU не трогают ([Globalization and ICU](https://learn.microsoft.com/en-us/dotnet/core/extensions/globalization-icu)).
 
 ```bash
 dotnet-counters monitor -n MyService --counters System.Runtime
@@ -267,6 +272,7 @@ finally
 - Alternate lookup (.NET 9+): поиск в `Dictionary<string, T>`, `HashSet<string>` и frozen-коллекциях по `ReadOnlySpan<char>` без создания строки.
 - `ImmutableArray<T>` — обёртка над массивом с быстрым чтением; `ImmutableList<T>` — дерево, дешевле при частых изменениях, но медленнее при чтении и переборе.
 - Задавайте ёмкость, если размер известен: `new List<T>(n)`, `new Dictionary<K,V>(n)`; в C# 15 — `[with(capacity: n), ..items]` в collection expression.
+- Топ-N без полной сортировки. Если нужны k лучших из n, держите `PriorityQueue<T, TPriority>` на k элементов: в корне — самый слабый из отобранных, новый кандидат вытесняет его. Это O(n log k) и k элементов памяти вместо массива на все n. Компаратор должен давать полный порядок, включая тай-брейк, иначе результат при равных ключах станет недетерминированным. Если k близко к n или код не горячий, хватит одной цепочки `OrderBy(...).ThenBy(...).Take(k)`: `OrderedEnumerable` в этом случае делает частичную быструю сортировку (`PartialQuickSort`). Промежуточный `ToList()` перед `Take` эту оптимизацию ломает.
 - Свои ключи-структуры: реализуйте `IEquatable<T>` и нормальный `GetHashCode`, иначе сравнение пойдёт через `object.Equals` с боксингом.
 - В .NET 11 `EqualityComparer<T>.Default` и `Comparer<T>.Default` специализированы в ReadyToRun-образах: по документации, до 20 раз быстрее до перехода на tier-1.
 
@@ -295,6 +301,8 @@ foreach (Range r in text.AsSpan().Split(' '))
 | [CollectionsMarshal](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.collectionsmarshal) | Microsoft | `AsSpan`, `GetValueRefOrAddDefault`, `SetCount` |
 | [Dictionary.GetAlternateLookup](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2.getalternatelookup) | Microsoft | Поиск по Span-ключу |
 | [ImmutableArray<T>](https://learn.microsoft.com/en-us/dotnet/api/system.collections.immutable.immutablearray-1) | Microsoft | Когда выбирать вместо `ImmutableList<T>` |
+| [PriorityQueue<TElement,TPriority>](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.priorityqueue-2) | Microsoft | Мин-куча для топ-N и планировщиков; `EnqueueDequeue` для ограниченной кучи |
+| [OrderedEnumerable.cs](https://github.com/dotnet/runtime/blob/main/src/libraries/System.Linq/src/System/Linq/OrderedEnumerable.cs) | dotnet/runtime | Исходник `PartialQuickSort`: почему `OrderBy().Take(k)` не сортирует всё |
 
 ---
 

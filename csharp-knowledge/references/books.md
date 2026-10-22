@@ -12,6 +12,8 @@
 - [Маршрут чтения по уровням](#маршрут-чтения-по-уровням)
 - [Каталоги и навигаторы](#каталоги-и-навигаторы)
 
+**Как читать этот файл.** Файл большой, около 60 КБ, целиком его не читают. На вопрос «что почитать по теме X» обычно хватает таблицы «Быстрый выбор по задаче» (в первом разделе, около 15 строк) и строк по теме, найденных через `Grep` по ключевому слову (например, `GC|память|Kokosa`, `async|Cleary`, `DDD`). Остальные разделы открывайте, только когда нужен полный обзор, маршрут по уровням или список блогов.
+
 ## Как выбирать книгу
 
 ### Ключевые выводы
@@ -118,7 +120,7 @@
 | [Entity Framework Core in Action, 2nd ed.](https://www.manning.com/books/entity-framework-core-in-action-second-edition) | Jon P Smith, 2021 | Manning, 575 стр., EF Core 5; платно | средний | Производительность запросов, DDD-сущности в EF Core, тестирование с БД, миграции. Блог автора — [The Reformed Programmer](https://www.thereformedprogrammer.net/). Возможности EF Core 6–10 отсутствуют |
 | [Real-World Web Development with .NET 10, 2nd ed.](https://www.oreilly.com/library/view/-/9781835888926) | Mark J. Price, декабрь 2025 | Packt; платно | средний | Контроллерный ASP.NET Core MVC и Web API, проверенные временем подходы к сопровождаемым сайтам |
 | [Apps and Services with .NET 10, 3rd ed.](https://www.packtpub.com/product/AppsandServiceswith.NET10/9781835462201) | Mark J. Price, февраль 2026 | Packt, 772 стр.; платно | средний | Ширина экосистемы: Avalonia, Blazor, gRPC, GraphQL, SignalR, кэширование, Aspire |
-| [Tools and Skills for .NET 10, 2nd ed.](https://reference-global.com/book/9781835882511) ([1-е издание под .NET 8](https://packtpub.com/en-gb/product/tools-and-skills-for-net-8-9781837635207/chapter/preface-pref/section/what-this-book-covers-preflvl1sec03)) | Mark J. Price, январь 2026 (1-е изд. июль 2024) | Packt; 2-е изд. вышло 7 января 2026 (по данным дистрибьюторов), 1-е изд. 778 стр.; платно | средний | Отладка, анализ памяти, Git, тестирование (включая производительность), Docker, Aspire, паттерны и принципы, подготовка к собеседованию |
+| [Tools and Skills for .NET 10, 2nd ed.](https://github.com/markjprice/tools-skills-net10) ([1-е издание под .NET 8](https://packtpub.com/en-gb/product/tools-and-skills-for-net-8-9781837635207/chapter/preface-pref/section/what-this-book-covers-preflvl1sec03)) | Mark J. Price, январь 2026 (1-е изд. июль 2024) | Packt, ISBN 9781835882511; 2-е изд. вышло 7 января 2026 (по репозиторию автора), 1-е изд. 778 стр.; платно | средний | Отладка, анализ памяти, Git, тестирование (включая производительность), Docker, Aspire, паттерны и принципы, подготовка к собеседованию |
 | [Functional Programming in C#, 2nd ed.](https://www.manning.com/books/functional-programming-in-c-sharp-second-edition) | Enrico Buonanno, январь 2022 | Manning, 448 стр.; платно | средний → продвинутый | Функции высшего порядка, чистота, `Option`/`Either`, валидация, records и pattern matching, неизменяемые данные, async-потоки, агенты. Меняет взгляд на обработку ошибок без исключений |
 | [Microservices in .NET, 2nd ed.](https://www.manning.com/books/microservices-in-net-second-edition) | Christian Horsdal Gammelgaard, январь 2022 | Manning; платно | средний | Границы сервисов, событийное взаимодействие, устойчивость, деплой в Kubernetes на Azure, мониторинг |
 | [.NET MAUI in Action](https://www.manning.com/books/dot-net-maui-in-action) | Matt Goldman, июль 2023 | Manning, 456 стр.; платно | средний | Кроссплатформенные приложения: layouts, MVVM, кастомные контролы, корпоративные паттерны, CI/CD в GitHub Actions |
@@ -171,7 +173,7 @@
 | Stephen Cleary | [blog.stephencleary.com](https://blog.stephencleary.com/) | async и конкурентность: «There Is No Thread», «Don't Block on Async Code», отмена |
 | Andrew Lock | [andrewlock.net](https://andrewlock.net/) | ASP.NET Core изнутри, source generators, серии к каждому релизу .NET |
 | Steve Gordon | [stevejgordon.co.uk](https://www.stevejgordon.co.uk/) | Высокопроизводительный C#, `HttpClient`, `Span<T>`, пайплайны |
-| Konrad Kokosa | [tooslowexception.com](https://tooslowexception.com/) | GC и память, автор Pro .NET Memory Management |
+| Konrad Kokosa | [prodotnetmemory.com](https://prodotnetmemory.com/), блог [tooslowexception.com](https://web.archive.org/web/2026/https://tooslowexception.com/) (архив: с октября 2026 сайт отвечает HTTP 500) | GC и память, автор Pro .NET Memory Management |
 | Adam Sitnik | [adamsitnik.com](https://adamsitnik.com/), [awesome-dot-net-performance](https://github.com/adamsitnik/awesome-dot-net-performance) | BenchmarkDotNet, производительность BCL |
 | Maoni Stephens | [devblogs: Maoni](https://devblogs.microsoft.com/dotnet/author/maoni/), [mem-doc](https://github.com/Maoni0/mem-doc) | Архитектор GC .NET: Regions, DATAS, диагностика памяти |
 | Kevin Gosse | [minidump.net](https://minidump.net/) | Внутренности рантайма, отладка дампов, соавтор Pro .NET Memory Management 2e |

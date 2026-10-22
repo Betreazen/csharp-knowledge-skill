@@ -1,6 +1,6 @@
 ---
 name: csharp-knowledge
-description: Knowledge base and workflow for writing, reviewing and optimizing C# and .NET code in any domain — libraries and NuGet packages, ASP.NET Core web APIs and microservices, data access with EF Core, cloud and serverless, desktop (WPF, WinUI, Avalonia, MAUI), mobile, CLI tools, games (Unity, Godot, MonoGame), AI/ML, IoT. Use when writing or reviewing C#, structuring a .NET solution, choosing NuGet packages or dotnet tooling (analyzers, dotnet format, xUnit/MSTest/TUnit, Microsoft.Testing.Platform, BenchmarkDotNet, dotnet-trace), benchmarking, profiling or optimizing .NET performance and allocations, working with async/concurrency/unsafe/P/Invoke, or picking C#/.NET books and articles. Includes a curated library of books, articles and patterns with links, a toolchain guide, and a development pipeline with benchmarks, code review and evidence-based optimization.
+description: Knowledge base and workflow for C# and .NET in any domain — libraries and NuGet, ASP.NET Core and EF Core, cloud, desktop (WPF, WinUI, Avalonia, MAUI), mobile, CLI, games (Unity, Godot, MonoGame), AI/ML, IoT. Use for any question about C# or .NET code, even one that looks quick to answer from memory: writing or reviewing C#; compiler errors and warnings (CS8618, CS1998, CS4014) and runtime exceptions (Collection was modified, ObjectDisposedException); struct vs class, records, nullable; choosing between types or primitives (ConcurrentDictionary vs lock, FrozenDictionary, Span, ValueTask); solution structure and slow builds; dotnet tooling (analyzers, dotnet format, xUnit/MSTest/TUnit, BenchmarkDotNet, dotnet-trace); slow code, allocations, GC pauses, memory growth; async hangs, deadlocks, thread-pool starvation, .Result/.Wait(); P/Invoke, unsafe, Native AOT, startup time; C#/.NET books. Includes a curated library with links, a toolchain guide and a pipeline with benchmarks, review and measured optimization.
 ---
 
 # C# и .NET: библиотека знаний и пайплайн
@@ -18,18 +18,19 @@ description: Knowledge base and workflow for writing, reviewing and optimizing C
 | Задача | Файл |
 | --- | --- |
 | Новая фича, рефакторинг или оптимизация: порядок работы | [references/pipeline.md](references/pipeline.md) |
-| Инструменты, команды, анализаторы, тесты, CI, шаблоны `Directory.Build.props` и `.editorconfig` | [references/toolchain.md](references/toolchain.md) |
+| Минимальный набор инструментов и порядок шагов CI | [toolchain.md → §11](references/toolchain.md#11-минимальный-набор-и-инструменты-по-ситуации) и [§12](references/toolchain.md#12-порядок-ci-пайплайна-и-workflow) |
+| Инструменты, команды, анализаторы, тесты, шаблоны `Directory.Build.props` и `.editorconfig` | [references/toolchain.md](references/toolchain.md) |
 | Код медленный или много аллоцирует: техника по симптому, профилирование, бенчмарки | [references/performance.md](references/performance.md) — начните с таблицы «Симптом → техника → источник» |
 | Возможности языка C# 12–15, records, pattern matching, nullable, ошибки, DI, паттерны, чеклист ревью | [references/idioms-patterns.md](references/idioms-patterns.md) |
 | Структура решения, слои, clean/vertical slice/модульный монолит, DDD, CQRS, стратегия тестирования | [references/architecture.md](references/architecture.md) |
 | async/await, `Task`/`ValueTask`, отмена, блокировки, каналы, `unsafe`, `Span`, P/Invoke, Native AOT interop | [references/concurrency-async-unsafe.md](references/concurrency-async-unsafe.md) |
 | Серверные области: ASP.NET Core, EF Core и данные, сообщения, gRPC, Blazor, облако, фоновые задачи, наблюдаемость, безопасность | [references/domains-server.md](references/domains-server.md) |
 | Клиентские и прочие области: десктоп, мобильные, CLI, NuGet-библиотеки, игры, AI/ML, IoT, interop, Roslyn | [references/domains-client.md](references/domains-client.md) |
-| Что почитать, блоги, маршрут обучения по уровням | [references/books.md](references/books.md) |
+| Что почитать: сначала [«Быстрый выбор по задаче»](references/books.md#быстрый-выбор-по-задаче) и [«Must-read»](references/books.md#must-read-десять-книг), остальное — по запросу | [references/books.md](references/books.md) |
 
-Каждый справочник начинается с оглавления. Читайте только нужный раздел, а не файл целиком.
+Справочники большие, 25–90 КБ каждый, и целиком их не читают. Сначала найдите заголовки (`Grep "^#"` по файлу), затем читайте `Read` с `offset` и `limit` только нужный раздел.
 
-Скрипт [scripts/compare-bdn.cs](scripts/compare-bdn.cs) сравнивает два прогона BenchmarkDotNet и возвращает код 1 при регрессии. Он нужен на этапах 7 и 11 пайплайна.
+Скрипт [scripts/compare-bdn.cs](scripts/compare-bdn.cs) сравнивает два прогона BenchmarkDotNet и возвращает код 1 при регрессии. Он нужен на этапах 7 (A/A) и 11 пайплайна.
 
 ## Как работать
 
@@ -63,6 +64,7 @@ dotnet package list --vulnerable --include-transitive --format json   # в вы�
 **При оптимизации:**
 
 - Сначала замер, потом правка. Без базовой линии нельзя сказать, что код стал быстрее.
+- До первой правки снимите базовую линию дважды и сравните прогоны (A/A). Так вы узнаете шум машины. Выигрыш меньше двух порогов перепроверяйте повторным прогоном.
 - Смотрите и на время, и на аллокации (`[MemoryDiagnoser]`).
 - Ищите технику по симптому в [performance.md](references/performance.md) и указывайте источник рядом с правкой.
 - Принимайте правку, только если бенчмарк показал значимый выигрыш, а тесты остались зелёными.

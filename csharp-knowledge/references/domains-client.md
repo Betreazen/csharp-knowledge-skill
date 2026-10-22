@@ -214,6 +214,15 @@
   - предвыделяйте буферы, используйте пулы (`ObjectPool<T>`, `ArrayPool<T>`), `Span<T>`/`stackalloc`, структуры для данных;
   - кешируйте `GetComponent` и поиск узлов.
 - Отделяйте симуляцию от движка: чистая библиотека правил (netstandard2.1 или net8.0 в зависимости от движка) без `UnityEngine`/`Godot`-типов, с детерминированным RNG в состоянии и фиксированным шагом. Её можно тестировать обычным xUnit, гонять на сервере и использовать для реплеев. В Unity такую логику оформляйте через assembly definitions.
+- Детерминизм для сетевой игры (lockstep, rollback, реплеи). Решения, которые трудно вернуть позже:
+  - состояние симуляции в целых числах или fixed-point; `float`/`double` и `Math.Sin`/`Pow` дают разные результаты на разных CPU, ОС и с разной шириной SIMD;
+  - свой RNG в состоянии мира, никакого `System.Random` и времени внутри шага;
+  - обход только по индексам массивов, не по `Dictionary`/`HashSet`: порядок перебора и хэши строк от запуска к запуску разные;
+  - команды игроков применяются в фиксированном порядке (тик, игрок, номер);
+  - хэш состояния раз в N тиков для поиска рассинхрона и тест «два прогона с одним seed дают одинаковый хэш».
+
+  Lockstep передаёт только ввод и подходит стратегиям с тысячами юнитов. Rollback откатывает и пересчитывает несколько тиков и подходит играм, где важен мгновенный отклик: файтингам, спортивным, платформерам. Оба подхода требуют детерминированной симуляции.
+- Много однородных сущностей вне Unity DOTS: рукописный SoA (массив на поле) или ECS-библиотека — Arch, Friflo.Engine.ECS. ECS окупается, когда комбинаций компонентов много. Для одного типа юнитов с одинаковыми полями SoA проще.
 - MonoGame 3.8.5 работает на .NET 8+, ветка 3.8.6 в превью. FNA — точная реимплементация XNA4 на SDL3 для десктопа, поддерживает NativeAOT и консоли, выпускается ежемесячно. Stride 4.3 таргетит .NET 10. raylib-cs 8.1 (raylib 6.0) добавил запуск в браузере через WebAssembly, но поддерживается пассивно.
 
 ### Пакеты
@@ -223,6 +232,8 @@
 - `Stride.Engine` (4.3.0.2507) — 3D-движок на .NET 10.
 - `Raylib-cs` (8.1.0, raylib 6.0) — привязки raylib, включая browser-wasm.
 - Unity: пакеты `com.unity.burst`, `com.unity.entities`, `com.unity.collections` ставятся через Package Manager (с 6.6 Burst — встроенный модуль).
+- `Arch` (2.1.0, май 2025; Apache-2.0) — архетипная ECS на .NET, без зависимости от движка.
+- `Friflo.Engine.ECS` (3.6.0, март 2026; 4.0 в превью; MIT) — ECS с запросами, событиями и сериализацией, без зависимости от движка.
 
 ### Ресурсы
 | Ресурс | Автор, год | Зачем читать |
@@ -244,6 +255,11 @@
 | [Stride](https://www.stride3d.net/) | Stride community, живой | Открытый C#-движок с редактором |
 | [Raylib-cs](https://www.nuget.org/packages/Raylib-cs) | ChrisDill и сообщество, 2026 | Привязки raylib 6.0 |
 | [Game Programming Patterns](https://gameprogrammingpatterns.com/) | Robert Nystrom, 2014 | Game Loop, Object Pool, Command — словарь игровой архитектуры |
+| [Fix Your Timestep!](https://gafferongames.com/post/fix_your_timestep/) | Glenn Fiedler, 2004 | Фиксированный шаг симуляции и интерполяция рендера |
+| [Floating Point Determinism](https://gafferongames.com/post/floating_point_determinism/) | Glenn Fiedler, 2010 | Почему `float` расходится между машинами и что с этим делать |
+| [1500 Archers on a 28.8](https://www.gamedeveloper.com/programming/1500-archers-on-a-28-8-network-programming-in-age-of-empires-and-beyond) | Paul Bettner, Mark Terrano, 2001 | Классика lockstep: передавать команды, а не состояние |
+| [Arch](https://github.com/genaray/Arch) | genaray и сообщество, 2025 | Архетипная ECS на .NET, бенчмарки и примеры |
+| [Friflo.Engine.ECS](https://github.com/friflo/Friflo.Engine.ECS) | Ullrich Praetz, 2026 | ECS на .NET, сравнение с другими библиотеками |
 
 ---
 
